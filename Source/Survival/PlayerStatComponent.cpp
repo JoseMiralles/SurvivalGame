@@ -26,7 +26,7 @@ void UPlayerStatComponent::BeginPlay()
 	GetWorld()->GetTimerManager().SetTimer
 	(TimerHandle, this, &UPlayerStatComponent::HandleHungerAndThirst, 3.0f, true);
 	GetWorld()->GetTimerManager().SetTimer
-	(StaminaHandle, this, &UPlayerStatComponent::RegenerateStamina, 1.0f, true);
+	(StaminaTimerHandle, this, &UPlayerStatComponent::RegenerateStamina, 1.0f, true);
 }
 
 //This method handles server replication of properties for this component.
@@ -40,6 +40,7 @@ void UPlayerStatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 	DOREPLIFETIME(UPlayerStatComponent, Stamina);
 }
 
+//Initializes H and T stats.
 void UPlayerStatComponent::HandleHungerAndThirst()
 {
 	if (GetOwnerRole() < ROLE_Authority)
@@ -47,6 +48,17 @@ void UPlayerStatComponent::HandleHungerAndThirst()
 		LowerHunger(HungerDecrementValue);
 		LowerThirst(ThirstDecrementValue);
 	}
+}
+
+// Hunger methods
+bool UPlayerStatComponent::ServerLowerHunger_Validate(float value)
+{
+	return true;
+}
+void UPlayerStatComponent::ServerLowerHunger_Implementation(float value)
+{
+	if (GetOwnerRole() == ROLE_Authority)
+		LowerHunger(value);
 }
 void UPlayerStatComponent::LowerHunger(float value)
 {
@@ -59,23 +71,8 @@ void UPlayerStatComponent::LowerHunger(float value)
 		Hunger -= value;
 	}
 }
-void UPlayerStatComponent::LowerThirst(float value)
-{
-	if (GetOwnerRole() < ROLE_Authority)
-		ServerLowerThirst(value);
-	else
-		Thirst -= value;
-}
 
-bool UPlayerStatComponent::ServerLowerHunger_Validate(float value)
-{
-	return true;
-}
-void UPlayerStatComponent::ServerLowerHunger_Implementation(float value)
-{
-	if (GetOwnerRole() == ROLE_Authority)
-		LowerHunger(value);
-}
+//Thirst methods
 bool UPlayerStatComponent::ServerLowerThirst_Validate(float value)
 {
 	return true;
@@ -83,14 +80,44 @@ bool UPlayerStatComponent::ServerLowerThirst_Validate(float value)
 void UPlayerStatComponent::ServerLowerThirst_Implementation(float value)
 {
 	if (GetOwnerRole() == ROLE_Authority)
+	{
 		LowerThirst(value);
+	}
 }
-
-void UPlayerStatComponent::LowerStamina(float value)
+void UPlayerStatComponent::LowerThirst(float value)
 {
-
+	if (GetOwnerRole() < ROLE_Authority)
+	{
+		ServerLowerThirst(value);
+	}
+	else
+	{
+		Thirst -= value;
+	}
 }
 
+void UPlayerStatComponent::LowerStamina(float Value)
+{
+	if (GetOwnerRole() < ROLE_Authority)
+	{
+		ServerLowerStamina(Value);
+	}
+	else if (GetOwnerRole() == ROLE_Authority)
+	{
+		Stamina -= Value;
+	}
+}
+bool UPlayerStatComponent::ServerLowerStamina_validate(float value)
+{
+	return true;
+}
+void UPlayerStatComponent::ServerLowerStamina_Implementation(float value)
+{
+	if (GetOwnerRole() == ROLE_Authority)
+	{
+		LowerStamina(value);
+	}
+}
 void UPlayerStatComponent::RegenerateStamina()
 {
 	if (GetOwnerRole() == ROLE_Authority)

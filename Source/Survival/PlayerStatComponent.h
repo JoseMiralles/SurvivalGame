@@ -16,25 +16,25 @@ public:
 	// Sets default values for this component's properties
 	UPlayerStatComponent();
 
-protected:
+protected: //Replicated Properties
 	UPROPERTY(Replicated) //Replicate in serverside
 		float Hunger;
-
 	UPROPERTY(EditAnywhere, Category = "S|PlayerStats")
 		float HungerDecrementValue;
 
 	UPROPERTY(Replicated)
 		float Thirst;
-
 	UPROPERTY(EditAnywhere, Category = "S|PlayerStats")
 		float ThirstDecrementValue;
 
 	UPROPERTY(Replicated)
 		float Stamina;
+	UPROPERTY(EditAnywhere, Category = "S|PlayerStats")
+		float StaminaDecrementValue;
+
 
 	FTimerHandle TimerHandle;
-
-	FTimerHandle StaminaHandle;
+	FTimerHandle StaminaTimerHandle;
 
 protected:
 	// Called when the game starts
@@ -54,8 +54,8 @@ protected:
 
 	UFUNCTION(Server, Reliable, WithValidation)
 		void ServerLowerStamina(float value);
-	bool ServerLowerStamina_
-
+	bool ServerLowerStamina_validate(float value);
+	void ServerLowerStamina_Implementation(float value);
 	void RegenerateStamina();
 
 public:
